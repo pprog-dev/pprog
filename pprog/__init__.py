@@ -1,6 +1,87 @@
 from copy import copy as shallowcopy, deepcopy
 
 
+def _resolve_attr(obj, attr, default):
+    """ auxiliary function for attrgetter. """
+    for name in attr.split("."):
+        if hasattr(obj, name):
+            obj = getattr(obj, name)
+        else:
+            return default
+    return obj
+
+
+def attrgetter(*items, default=None):
+    """ Return a callable object that fetches the given attribute(s) fro its operand.
+    Similar to operator.attrgetter, but support default value when a named attr is not found.
+
+    Examples
+    --------
+    Get attributes with default values.
+
+    >>> from collections import namedtuple
+    >>> from pprog import attrgetter
+    >>> name = namedtuple("Name", ["first", "last"])
+    >>> name.first = "Zhiqing"
+    >>> name.last = "Xiao"
+    >>> person = namedtuple("Person", ["name", "city"])
+    >>> person.name = name
+    >>> person.city = "Beijing"
+    >>> g = attrgetter("name.first", "name.middle", "name.last", default="")
+    >>> result = g(person)
+    >>> result
+    ("Zhiqing", "", "Xiao")
+    """
+    if len(items) == 1:
+        attr = items[0]
+
+        def g(obj):
+            return _resolve_attr(obj, attr, default)
+    else:
+
+        def g(obj):
+            return tuple(_resolve_attr(obj, attr, default) for attr in items)
+    return g
+
+
+def _resolve_item(obj, item, default):
+    """ auxiliary function for itemgetter. """
+    if not isinstance(item, list):
+        item = [item]
+    for i in item:
+        try:
+            obj = obj[i]
+        except KeyError:
+            return default
+    return obj
+
+
+def itemgetter(*items, default=None):
+    """ Return a callable object that fetches the given item(s) fro its operand.
+    Similar to operator.itemgetter, but support multi-level item and a default value when a item is not found.
+
+    Examples
+    --------
+    Get multiple items with default values.
+
+    >>> person = {"name": {"first": "Zhiqing", "last": "Xiao"}, "city": "Beijing"}
+    >>> g = itemgetter(["name", "first"], ["name", "middle"], ["name", "last"], default="")
+    >>> result = g(person)
+    >>> result
+    ("Zhiqing", "", "Xiao")
+    """
+    if len(items) == 1:
+        item = items[0]
+
+        def g(obj):
+            return _resolve_item(obj, item, default)
+    else:
+
+        def g(obj):
+            return tuple(_resolve_item(obj, item, default) for item in items)
+    return g
+
+
 def identity(value, *args, **kwargs):
     """ Returns the first positional arguments, and ignore other arguments.
 
@@ -45,38 +126,6 @@ def perm(values, cycle):
     for i, v in enumerate(cycle):
         results[v] = values[cycle[(i+1) % len(cycle)]]
     return results
-
-
-class AttrCaller:
-    """ Callable that calls the attribution of its argument when it is called.
-
-    Examples
-    --------
-    Create a caller that calls the `upper` attribute.
-
-    >>> from pprog import AttrCaller
-    >>> caller = AttrCaller("upper")
-    >>> result = caller("test")
-    >>> result
-    'TEST'
-
-    Check whether elements in a pd.Series are valid Python identifies.
-
-    >>> import pandas as pd
-    >>> from pprog import AttrCaller
-    >>> isidentifier = AttrCaller("isidentifier")
-    >>> s = pd.Series(["A", "3"])
-    >>> s.apply(isidentifier)
-    0     True
-    1    False
-    dtype: bool
-    """
-    def __init__(self, attr):
-        self.attr = attr
-
-    def __call__(self, obj, *args, **kwargs):
-        callable = getattr(obj, self.attr)
-        return callable(*args, **kwargs)
 
 
 class ConstantCreator:
@@ -137,7 +186,7 @@ class PermArgsExecutor:
     >>> executor(3, 2, 6)
     range(2, 3, 6)
 
-    Swap the first two positional arguments.
+    Swap arguments according to cycle notation.
 
     >>> from pprog import PermArgsExecutor
     >>> executor = PermArgsExecutor(range, cycle=[1, 2])

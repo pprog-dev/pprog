@@ -1,15 +1,43 @@
-from pprog import identity, AttrCaller, ConstantCreator, perm, PermArgsExecutor
+from collections import namedtuple
+from pprog import attrgetter, itemgetter, identity, ConstantCreator, perm, PermArgsExecutor
+
+
+def test_attrgetter():
+    name = namedtuple("Name", ["first", "last"])
+    name.first = "Zhiqing"
+    name.last = "Xiao"
+    person = namedtuple("Person", ["name", "city"])
+    person.name = name
+    person.city = "Beijing"
+
+    g = attrgetter("city")
+    result = g(person)
+    assert result == "Beijing"
+    g = attrgetter("city", "hometown", default=None)
+    result = g(person)
+    assert result == ("Beijing", None)
+    g = attrgetter("name.first", "name.middle", "name.last", default="")
+    result = g(person)
+    assert result == ("Zhiqing", "", "Xiao")
+
+
+def test_itemgetter():
+    person = {"name": {"first": "Zhiqing", "last": "Xiao"}, "city": "Beijing"}
+
+    g = itemgetter("city")
+    result = g(person)
+    assert result == "Beijing"
+    g = itemgetter("city", "hometown", default=None)
+    result = g(person)
+    assert result == ("Beijing", None)
+    g = itemgetter(["name", "first"], ["name", "middle"], ["name", "last"], default="")
+    result = g(person)
+    assert result == ("Zhiqing", "", "Xiao")
 
 
 def test_identity():
     result = identity(3, "hello", key="value")
     assert result == 3
-
-
-def test_AttrCaller():
-    caller = AttrCaller("upper")
-    result = caller("test")
-    assert result == "TEST"
 
 
 def test_ConstantCreator():

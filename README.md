@@ -13,15 +13,17 @@ A library for Python programming
 
 `identity(value, *args, **kwargs)` returns the first value `value`.
 
-`perm(values, cycle)` permutates a list according to a cycle notation.
+`perm(values, /, *, cycle)` permutates a list according to a cycle notation.
+
+`attrgetter(attr, ..., /, *, default)` instantiates a callable object that fetches the given attribute(s) from its operand, with default value for missing attributes.
+
+`itemgetter(item, ..., /, *, default)` instantiates a callable object that fetches the given item(s) from its operand, with muti-level keys and default value for missing items.
 
 #### Classes
 
-`AttrCaller(attr)` instantiates a callable object that calls the callable attribution of its argument when it is called.
+`ConstantCreator(value, /, *, copy=False)` instantiates a callable object that returns the same constant when it is called.
 
-`ConstantCreator(value, copy=False)` instantiates a callable object that returns the same constant when it is called.
-
-`PermArgsExecutor(fun, perm=None)` instantiates a callable object that swaps positional arguments according to a cyclc notation. By default, it permutates the first two arguments.
+`PermArgsExecutor(fun, /, *, perm=None)` instantiates a callable object that swaps positional arguments according to a cyclc notation. By default, it permutates the first two arguments.
 
 
 ### Usage Examples
